@@ -80,10 +80,10 @@
 </footer>
 
 <script>
-    const owner = "nomixxx"; // ← замени на свой GitHub логин
-    const repo = "vuz-rating"; // ← название твоего репозитория
+    const owner = "nomixxx"; // Твой GitHub логин
+    const repo = "vuz-rating"; // Название репозитория
     const filePath = "reviews.json";
-    const token = "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";
+    const token = "YOUR_NEW_GITHUB_PAT"; // Замени на свой токен
 
     async function fetchReviews() {
         try {
@@ -93,6 +93,9 @@
                     Accept: "application/vnd.github.v3.raw"
                 }
             });
+            if (!response.ok) {
+                throw new Error(`Ошибка при загрузке отзывов: ${response.status} ${response.statusText}`);
+            }
             const data = await response.json();
             return JSON.parse(atob(data.content));
         } catch (error) {
@@ -103,35 +106,45 @@
     }
 
     async function saveReview(review) {
-        const reviews = await fetchReviews();
-        reviews.push(review);
+        try {
+            const reviews = await fetchReviews();
 
-        const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(reviews, null, 2))));
+            reviews.push(review);
 
-        const shaResponse = await fetch(`https://api.github.com/repos/ ${owner}/${repo}/git/ref/heads/main`, {
-            headers: {
-                Authorization: `token ${token}`
+            const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(reviews, null, 2))));
+
+            const shaResponse = await fetch(`https://api.github.com/repos/ ${owner}/${repo}/git/ref/heads/main`, {
+                headers: {
+                    Authorization: `token ${token}`
+                }
+            });
+
+            if (!shaResponse.ok) {
+                throw new Error("Не удалось получить SHA");
             }
-        });
 
-        const shaData = await shaResponse.json();
-        const blobSha = shaData.object.sha;
+            const shaData = await shaResponse.json();
+            const blobSha = shaData.object.sha;
 
-        const commitResponse = await fetch(`https://api.github.com/repos/ ${owner}/${repo}/contents/${filePath}`, {
-            method: "PUT",
-            headers: {
-                Authorization: `token ${token}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                message: "Обновление отзыва",
-                content: updatedContent,
-                sha: blobSha
-            })
-        });
+            const commitResponse = await fetch(`https://api.github.com/repos/ ${owner}/${repo}/contents/${filePath}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: "Обновление отзыва",
+                    content: updatedContent,
+                    sha: blobSha
+                })
+            });
 
-        if (!commitResponse.ok) {
-            throw new Error("Ошибка сохранения на GitHub");
+            if (!commitResponse.ok) {
+                throw new Error("Ошибка сохранения на GitHub");
+            }
+        } catch (error) {
+            console.error("Ошибка при сохранении отзыва:", error);
+            alert("Ошибка при сохранении отзыва. Проверьте интернет или токен.");
         }
     }
 
