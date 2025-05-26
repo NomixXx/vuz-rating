@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отзывы студентов</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .star-rating {
+            display: flex;
+            gap: 5px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .star-rating input {
+            display: none;
+        }
+        .star-rating label {
+            color: #ccc;
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+        .star-rating input:checked ~ label {
+            color: gold;
+        }
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: gold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>✍️ Отзывы студентов</h1>
+        <p>Что думают те, кто учится в вузах Новороссийска</p>
+    </header>
+    <nav>
+        <a href="index.html">Главная</a>
+        <a href="rating.html">Рейтинг</a>
+        <a href="universities.html">Вузы</a>
+        <a href="reviews.html">Отзывы</a>
+        <a href="contact.html">Контакты</a>
+    </nav>
+    <main class="container">
+        <h2>Добавь свой отзыв</h2>
+        <form id="reviewForm" action="#" method="POST">
+            <label for="name">Имя:</label><br>
+            <input type="text" id="name" name="name" required><br><br>
+            <label for="university">Ваш вуз:</label><br>
+            <select id="university" name="university" required>
+                <option value="">-- Выберите вуз --</option>
+                <option value="Филиал МГУ им. Ломоносова">Филиал МГУ им. Ломоносова</option>
+                <option value="Новороссийский филиал РЭУ им. Плеханова">Новороссийский филиал РЭУ им. Плеханова</option>
+                <option value="КубГУ (филиал)">КубГУ (филиал)</option>
+                <option value="Новороссийский институт управления — филиал РАНХиГС">Новороссийский институт управления — филиал РАНХиГС</option>
+                <option value="АНО ВО «Российская международная академия туризма»">АНО ВО «Российская международная академия туризма»</option>
+            </select><br><br>
+            <label>Оцените свой вуз:</label><br>
+            <div class="star-rating">
+                <input type="radio" id="star5" name="rating" value="5" required />
+                <label for="star5">&#9733;</label>
+                <input type="radio" id="star4" name="rating" value="4" />
+                <label for="star4">&#9733;</label>
+                <input type="radio" id="star3" name="rating" value="3" />
+                <label for="star3">&#9733;</label>
+                <input type="radio" id="star2" name="rating" value="2" />
+                <label for="star2">&#9733;</label>
+                <input type="radio" id="star1" name="rating" value="1" />
+                <label for="star1">&#9733;</label>
+            </div><br>
+            <label for="review">Ваш отзыв:</label><br>
+            <textarea id="review" name="review" rows="5" required></textarea><br><br>
+            <button type="submit">Отправить отзыв</button>
+        </form>
+    
+        <h2>Последние отзывы</h2>
+        <div id="reviewsList"></div>
+    </main>
+    <footer>
+        &copy; 2025 — Рейтинг вузов Новороссийска | Все права защищены
+    </footer>
+    
+    <script>
+        const owner = "YOUR_GITHUB_USERNAME"; // ← замени на свой логин
+        const repo = "vuz-rating"; // название твоего репозитория
+        const filePath = "reviews.json";
+        const token = "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";
+    
+        async function fetchReviews() {
+            const response = await fetch(`https://api.github.com/repos/ ${owner}/${repo}/contents/${filePath}`, {
+                headers: {
+                    Authorization: `token ${token}`,
+                    Accept: "application/vnd.github.v3.raw"
+                }
+            });
+            const data = await response.json();
+            return JSON.parse(atob(data.content));
+        }
+    
+        async function saveReview(review) {
+            const reviews = await fetchReviews();
+    
+            reviews.push(review);
+    
+            const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(reviews, null, 2))));
+    
+            const shaResponse = await fetch(`https://api.github.com/repos/ ${owner}/${repo}/git/ref/heads/main`, {
+                headers: {
+                    Authorization: `token ${token}`
+                }
+            });
+    
+            const shaData = await shaResponse.json();
+            const blobSha = shaData.object.sha;
+    
+            const commitResponse = await fetch(`https://api.github.com/repos/ ${owner}/${repo}/contents/${filePath}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: "Обновление отзыва",
+                    content: updatedContent,
+                    sha: blobSha
+                })
+            });
+    
+            return commitResponse.ok;
+        }
+    
+        document.getElementById("reviewForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+    
+            const name = document.getElementById("name").value.trim();
+            const university = document.getElementById("university").value;
+            const rating = document.querySelector("input[name='rating']:checked")?.value;
+            const text = document.getElementById("review").value.trim();
+    
+            if (!name || !university || !rating || !text) {
+                alert("Пожалуйста, заполните все поля.");
+                return;
+            }
+    
+            const newReview = { name, university, rating, text };
+    
+            try {
+                await saveReview(newReview);
+                alert("Спасибо за ваш отзыв!");
+                window.location.href = "index.html";
+            } catch (error) {
+                alert("Ошибка при сохранении отзыва. Проверьте интернет или токен.");
+                console.error(error);
+            }
+        });
+    
+        // Загрузка существующих отзывов
+        async function loadReviews() {
+            try {
+                const reviews = await fetchReviews();
+                const container = document.getElementById("reviewsList");
+                container.innerHTML = "";
+    
+                reviews.forEach(review => {
+                    const div = document.createElement("div");
+                    div.className = "review-box";
+                    div.innerHTML = `
+                        <p><strong>${review.name}, ${review.university}</strong> ★★★★★ (${review.rating}/5)</p>
+                        <p>"${review.text}"</p>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (e) {
+                console.error("Не удалось загрузить отзывы:", e);
+            }
+        }
+    
+        window.onload = loadReviews;
+    </script>
+    </body>
+</body>

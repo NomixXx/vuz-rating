@@ -1,0 +1,97 @@
+/* style.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f5f7fa;
+    color: #333;
+}
+
+header {
+    background: #003366;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    background: #004080;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: white;
+    padding: 15px;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+nav a:hover {
+    background: #0055a5;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.university-list {
+    display: grid;
+    gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .university-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+.university-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+button {
+    padding: 10px 20px;
+    background: #004080;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0055a5;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    text-align: left;
+}
+
+.review-box {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+footer {
+    background: #003366;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    margin-top: 30px;
+}
